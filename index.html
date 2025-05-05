@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>备忘录</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .group {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .group-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .memo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .memo-item:last-child {
+            border-bottom: none;
+        }
+        .delete-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #ff1a1a;
+        }
+        .add-form {
+            margin-top: 20px;
+        }
+        input {
+            padding: 8px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>备忘录</h1>
+
+    <div class="add-form">
+        <h3>添加新备忘录</h3>
+        <input type="text" id="group-input" placeholder="输入分组名称">
+        <input type="text" id="memo-input" placeholder="输入备忘录内容">
+        <button id="add-btn">添加</button>
+    </div>
+
+    <div id="groups-container"></div>
+
+    <script>
+        // 从localStorage加载数据
+        function loadMemos() {
+            const memos = JSON.parse(localStorage.getItem('memos')) || {};
+            const container = document.getElementById('groups-container');
+            container.innerHTML = '';
+
+            for (const [groupName, items] of Object.entries(memos)) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'group-title';
+                titleDiv.textContent = groupName;
+                
+                groupDiv.appendChild(titleDiv);
+
+                items.forEach(item => {
+                    const memoItem = document.createElement('div');
+                    memoItem.className = 'memo-item';
+                    
+                    const memoText = document.createElement('span');
+                    memoText.textContent = item;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = '删除';
+                    deleteBtn.addEventListener('click', function() {
+                        memoItem.remove();
+                        saveMemos();
+                    });
+                    
+                    memoItem.appendChild(memoText);
+                    memoItem.appendChild(deleteBtn);
+                    groupDiv.appendChild(memoItem);
+                });
+
+                container.appendChild(groupDiv);
+            }
+        }
+
+        // 保存数据到localStorage
+        function saveMemos() {
+            const memos = {};
+            document.querySelectorAll('.group').forEach(group => {
+                const groupName = group.querySelector('.group-title').textContent;
+                const items = [];
+                group.querySelectorAll('.memo-item span').forEach(span => {
+                    items.push(span.textContent);
+                });
+                memos[groupName] = items;
+            });
+            localStorage.setItem('memos', JSON.stringify(memos));
+        }
+
+        // 初始化加载
+        loadMemos();
+
+        document.getElementById('add-btn').addEventListener('click', function() {
+            const groupInput = document.getElementById('group-input');
+            const memoInput = document.getElementById('memo-input');
+            const groupName = groupInput.value.trim();
+            
+            if (groupName === '') {
+                alert('请输入分组名称');
+                return;
+            }
+            
+            if (memoInput.value.trim() === '') {
+                alert('请输入备忘录内容');
+                return;
+            }
+
+            // 查找或创建分组
+            let groupDiv = null;
+            const groups = document.querySelectorAll('.group');
+            for (const group of groups) {
+                if (group.querySelector('.group-title').textContent === groupName) {
+                    groupDiv = group;
+                    break;
+                }
+            }
+
+            if (!groupDiv) {
+                groupDiv = document.createElement('div');
+                groupDiv.className = 'group';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'group-title';
+                titleDiv.textContent = groupName;
+                
+                groupDiv.appendChild(titleDiv);
+                document.getElementById('groups-container').prepend(groupDiv);
+            }
+
+            // 创建新备忘录项
+            const memoItem = document.createElement('div');
+            memoItem.className = 'memo-item';
+            
+            const memoText = document.createElement('span');
+            memoText.textContent = memoInput.value;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '删除';
+            deleteBtn.addEventListener('click', function() {
+                memoItem.remove();
+                saveMemos();
+            });
+            
+            memoItem.appendChild(memoText);
+            memoItem.appendChild(deleteBtn);
+            groupDiv.appendChild(memoItem);
+            
+            // 清空输入框并保存
+            memoInput.value = '';
+            saveMemos();
+        });
+    </script>
+</body>
+</html>
